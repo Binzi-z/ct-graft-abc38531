@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+RELEASE_FLAGS=""
+EXECUTE=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --execute)
+            RELEASE_FLAGS="--execute --no-confirm"
+            EXECUTE="true"
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 [--execute] VERSION"
+    exit 1
+fi
+
+# Accepts:
+#   X.Y.Z
+#   X.Y.Z-rc.N
+regex='^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$'
+
+VERSION=$1
+if [[ ! $VERSION =~ $regex ]]; then
+    echo "Version must match the format X.Y.Z or X.Y.Z-rc.N"
+    exit 1
+fi
+
+RELEASE_CRATES=(
+    graft
+    graft-sqlite
+)
+
+# verify that HEAD == origin/main
+git fetch origin
+HEAD_COMMIT=$(git rev-parse HEAD)
+ORIGIN_MAIN_COMMIT=$(git rev-parse origin/main)
+
+if [ "$HEAD_COMMIT" != "$ORIGIN_MAIN_COMMIT" ]; then
+    echo "Warning: HEAD ($HEAD_COMMIT) is not equal to origin/main ($ORIGIN_MAIN_COMMIT)."
+    read -r -p "Continue anyway? [y/N] " reply
+    case "$reply" in
+        [Yy]*) ;; # proceed
+        *)
+            echo "Aborting."
+            exit 1
+            ;;
+    esac
+fi
+
+# verify that git is clean
+if ! git diff-index --quiet HEAD --; then
+    echo "Error: git working directory is not clean. Please commit or stash your changes."
+    exit 1
+fi
+
+BRANCH="release/v${VERSION}"
+
+if [ -n "$EXECUTE" ]; then
+    # create a new branch for the release, if not already on it
+    if [ "$(git branch --show-current)" != "$BRANCH" ]; then
+        git checkout -b ${BRANCH}
+    fi
+fi
+
+for crate in "${RELEASE_CRATES[@]}"; do
+    cargo release version ${VERSION} --package ${crate} ${RELEASE_FLAGS}
+    cargo release replace --package ${crate} ${RELEASE_FLAGS}
+    cargo release hook --package ${crate} ${RELEASE_FLAGS}
+done
+
+# commit and push to the release branch
+if [ -n "$EXECUTE" ]; then
+    git add .
+    git commit -m "chore: Release v${VERSION}"
+
+    # push the branch to origin
+    git push origin ${BRANCH}
+
+    echo "To continue the release process, create a GitHub PR on the release branch: ${BRANCH}"
+else
+    echo "To start the release process, run:"
+    echo "  $0 --execute ${VERSION}"
+fi

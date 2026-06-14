@@ -1,0 +1,10 @@
+# Ignore everything in the repository
+*
+
+# Whitelist specific files and directories
+!/Cargo.toml
+!/Cargo.lock
+!/crates
+!/tests/antithesis/libvoidstar.so
+!/tests/antithesis/docker-entrypoint.sh
+!/tests/antithesis/workloads

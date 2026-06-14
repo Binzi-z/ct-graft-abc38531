@@ -1,0 +1,10 @@
+/target/
+/mutants.out*
+/dist/
+/distx/
+**/*.rs.bk
+*.pdb
+.env
+/.kosho**
+/.graft
+/.claude/plans

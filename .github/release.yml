@@ -1,0 +1,12 @@
+# customize GitHub auto-generated release notes
+changelog:
+  categories:
+    - title: Pull requests
+      labels:
+        - "*"
+      exclude:
+        authors:
+          - renovate
+    - title: Dependency updates
+      labels:
+        - "*"

@@ -1,0 +1,17 @@
+[package]
+name = "graft-tool"
+version = "0.1.0"
+edition = "2024"
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+rust-version = { workspace = true }
+
+[dependencies]
+graft = { path = "../graft" }
+
+clap = { workspace = true, features = ["derive"] }
+
+[lints]
+workspace = true

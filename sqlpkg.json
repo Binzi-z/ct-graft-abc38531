@@ -1,0 +1,19 @@
+{
+  "owner": "orbitinghail",
+  "name": "graft",
+  "repository": "https://github.com/orbitinghail/graft",
+  "authors": ["Carl Sverre"],
+  "license": "MIT OR Apache-2.0",
+  "description": "A SQLite extension which replicates data to and from object storage.",
+  "symbols": [],
+  "assets": {
+    "path": "https://github.com/orbitinghail/graft/releases/latest/download",
+    "files": {
+      "darwin-arm64": "libgraft-ext-macos-aarch64.tar.gz",
+      "linux-amd64": "libgraft-ext-linux-x86_64.tar.gz",
+      "linux-arm64": "libgraft-ext-linux-aarch64.tar.gz",
+      "windows-amd64": "libgraft-ext-windows-x86_64.zip",
+      "windows-arm64": "libgraft-ext-windows-aarch64.zip"
+    }
+  }
+}

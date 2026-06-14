@@ -1,0 +1,192 @@
+---
+title: Pragmas
+description: Interact with the Graft SQLite extension using pragmas
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+The application can interact with the Graft SQLite extension using the following [pragma statements].
+
+[pragma statements]: https://www.sqlite.org/pragma.html
+
+## Volume Management
+
+### `pragma graft_volumes`
+
+Lists all Volumes and their status.
+
+```sql
+pragma graft_volumes;
+```
+
+Shows each Volume's Volume ID, local Log ID, remote Log ID, and sync status. The current Volume is marked with "(current)".
+
+### `pragma graft_tags`
+
+Lists all tags and their associated Volumes.
+
+```sql
+pragma graft_tags;
+```
+
+Displays tag names, the Volume they point to, and sync status.
+
+### `pragma graft_new`
+
+Creates a new Volume with a random Volume ID. Updates the current tag to point at the new Volume.
+
+```sql
+pragma graft_new;
+```
+
+This is a convenience shortcut for `pragma graft_switch` with a randomly generated VolumeId. It creates a fresh, empty database.
+
+### `pragma graft_switch = "local_vid[:local[:remote]]"`
+
+Switches the current connection to a different Volume. You may optionally specify local and remote log ids. If any of the ids don't exist they will be created. Updates the current tag to point at the Volume.
+
+```sql
+-- Switch to a specific Volume by Volume ID
+pragma graft_switch = "5rMJkfqcEt-2ei3bXFrcteHv";
+
+-- Switch to a Volume and specify its local and remote Log IDs
+pragma graft_switch="5rMJkf2zHE-2xMqqKcN8RLZh:74ggc1B6R4-2kkvcy9fi4CHJ:74ggc1B6jg-2udz14pbDayZC";
+```
+
+### `pragma graft_clone = "remote_log_id"`
+
+Creates a new local Volume that tracks the specified remote Log. Like `git clone`. Updates the current tag to point at the new Volume.
+
+```sql
+-- Clone from a specific remote Log
+pragma graft_clone = "74ggc2H6PL-39NEcP8ybwTiB";
+
+-- Clone from the current Volume's remote Log
+pragma graft_clone;
+```
+
+### `pragma graft_fork`
+
+Forks the current Volume into a new independent Volume. Updates the current tag to point at the new Volume.
+
+```sql
+pragma graft_fork;
+```
+
+The Volume must be fully hydrated (all pages downloaded) before forking.
+
+## Introspection
+
+### `pragma graft_info`
+
+Shows detailed information about the current Volume.
+
+```sql
+pragma graft_info;
+```
+
+Displays:
+
+- Volume ID
+- Local Log ID
+- Remote Log ID
+- Last sync status
+- Current snapshot
+- Snapshot page count
+- Snapshot size
+
+### `pragma graft_status`
+
+Shows the synchronization status of the current Volume.
+
+```sql
+pragma graft_status;
+```
+
+Indicates whether the local Log is ahead, behind, or up-to-date with the remote Log. Suggests actions like `pragma graft_pull` or `pragma graft_push` when appropriate.
+
+### `pragma graft_snapshot`
+
+Returns a compressed description of the current connection's snapshot.
+
+```sql
+pragma graft_snapshot;
+```
+
+Shows the snapshot structure, which may span LSN ranges on multiple logs.
+
+### `pragma graft_audit`
+
+Scans the current volume. Reports how many pages are cached locally versus the total number of pages. If fully hydrated, shows a checksum. Otherwise, suggests using `pragma graft_hydrate`.
+
+```sql
+pragma graft_audit;
+```
+
+### `pragma graft_version`
+
+Displays Graft's version and commit hash. Useful for debugging and support.
+
+```sql
+pragma graft_version;
+```
+
+## Synchronization
+
+### `pragma graft_fetch`
+
+Fetches the remote log without applying changes.
+Similar to `git fetch`.
+
+```sql
+pragma graft_fetch;
+```
+
+### `pragma graft_pull`
+
+Fetches and merges changes from the remote Log. Similar to `git pull`.
+
+```sql
+pragma graft_pull;
+```
+
+### `pragma graft_push`
+
+Pushes local changes to the remote Log. Similar to `git push`.
+
+```sql
+pragma graft_push;
+```
+
+### `pragma graft_hydrate`
+
+Downloads all missing pages for the current snapshot.
+
+```sql
+pragma graft_hydrate;
+```
+
+## Data Import/Export
+
+### `pragma graft_import = "PATH"`
+
+<Aside type="caution">
+  This pragma is deprecated. Refer to the [`import docs`](/r/graft_import) for
+  alternatives.
+</Aside>
+
+### `pragma graft_export = "PATH"`
+
+Exports the current Volume to a regular SQLite database file.
+
+```sql
+pragma graft_export = "/path/to/output.db";
+```
+
+Reads all pages from the current Volume and writes them to a standard SQLite database file. The exported file can be opened with any SQLite client.
+
+**Important notes:**
+
+- If a file already exists at the target path, it will be overwritten
+- Unlike import, export has no restrictions and can be called at any time
+- Exports the current database state as seen by the connection
